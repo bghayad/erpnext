@@ -761,6 +761,10 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 		total_amount = ref_doc.get("grand_total")
 		exchange_rate = 1
 		outstanding_amount = ref_doc.get("outstanding_amount")
+	elif reference_doctype == "Ticket Invoice":
+		total_amount = ref_doc.get("cust_grand_total_amount")
+		exchange_rate = 1
+		outstanding_amount = ref_doc.get("outstanding_amount")
 	elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
 		total_amount = ref_doc.get("total_amount")
 		if ref_doc.multi_currency:
@@ -815,7 +819,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	if dt in ("Sales Order", "Purchase Order") and flt(doc.per_billed, 2) > 0:
 		frappe.throw(_("Can only make payment against unbilled {0}").format(dt))
 
-	if dt in ("Sales Invoice", "Sales Order"):
+	if dt in ("Sales Invoice", "Sales Order", "Ticket Invoice"):
 		party_type = "Customer"
 	elif dt in ("Purchase Invoice", "Purchase Order"):
 		party_type = "Supplier"
@@ -829,7 +833,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		party_account = doc.debit_to
 	elif dt == "Purchase Invoice":
 		party_account = doc.credit_to
-	elif dt == "Fees":
+	elif dt == "Fees" or dt == "Ticket Invoice":
 		party_account = doc.receivable_account
 	elif dt == "Employee Advance":
 		party_account = doc.advance_account
@@ -866,6 +870,9 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		outstanding_amount = flt(doc.advance_amount) - flt(doc.paid_amount)
 	elif dt == "Fees":
 		grand_total = doc.grand_total
+		outstanding_amount = doc.outstanding_amount
+	elif dt == "Ticket Invoice":
+		grand_total = doc.cust_grand_total_amount
 		outstanding_amount = doc.outstanding_amount
 	else:
 		if party_account_currency == doc.company_currency:
