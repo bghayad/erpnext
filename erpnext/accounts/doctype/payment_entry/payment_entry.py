@@ -209,7 +209,7 @@ class PaymentEntry(AccountsController):
 		if self.party_type == "Student":
 			valid_reference_doctypes = ("Fees")
 		elif self.party_type == "Customer":
-			valid_reference_doctypes = ("Sales Order", "Sales Invoice", "Journal Entry", "Ticket Invoice")
+			valid_reference_doctypes = ("Sales Order", "Sales Invoice", "Journal Entry", "Ticket Invoice", "Tour Invoice")
 		elif self.party_type == "Supplier":
 			valid_reference_doctypes = ("Purchase Order", "Purchase Invoice", "Journal Entry")
 		elif self.party_type == "Employee":
@@ -235,8 +235,8 @@ class PaymentEntry(AccountsController):
 					else:
 						self.validate_journal_entry()
 
-					if d.reference_doctype in ("Sales Invoice", "Purchase Invoice", "Expense Claim", "Fees", "Ticket Invoice"):
-						if self.party_type == "Customer" and d.reference_doctype == "Ticket Invoice":
+					if d.reference_doctype in ("Sales Invoice", "Purchase Invoice", "Expense Claim", "Fees", "Ticket Invoice", "Tour Invoice"):
+						if self.party_type == "Customer" and (d.reference_doctype == "Ticket Invoice" or d.reference_doctype == "Tour Invoice"):
 							ref_party_account = ref_doc.receivable_account
 						elif self.party_type == "Customer":
 							ref_party_account = ref_doc.debit_to
@@ -767,6 +767,10 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 		total_amount = ref_doc.get("cust_grand_total_amount")
 		exchange_rate = 1
 		outstanding_amount = ref_doc.get("outstanding_amount")
+	elif reference_doctype == "Tour Invoice":
+		total_amount = ref_doc.get("cust_grand_total_av")
+		exchange_rate = 1
+		outstanding_amount = ref_doc.get("outstanding_amount")	
 	elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
 		total_amount = ref_doc.get("total_amount")
 		if ref_doc.multi_currency:
@@ -821,7 +825,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	if dt in ("Sales Order", "Purchase Order") and flt(doc.per_billed, 2) > 0:
 		frappe.throw(_("Can only make payment against unbilled {0}").format(dt))
 
-	if dt in ("Sales Invoice", "Sales Order", "Ticket Invoice"):
+	if dt in ("Sales Invoice", "Sales Order", "Ticket Invoice", "Tour Invoice"):
 		party_type = "Customer"
 	elif dt in ("Purchase Invoice", "Purchase Order"):
 		party_type = "Supplier"
@@ -835,7 +839,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		party_account = doc.debit_to
 	elif dt == "Purchase Invoice":
 		party_account = doc.credit_to
-	elif dt == "Fees" or dt == "Ticket Invoice":
+	elif dt == "Fees" or dt == "Ticket Invoice" or dt == "Tour Invoice":
 		party_account = doc.receivable_account
 	elif dt == "Employee Advance":
 		party_account = doc.advance_account
@@ -847,7 +851,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	party_account_currency = doc.get("party_account_currency") or get_account_currency(party_account)
 
 	# payment type
-	if (dt == "Sales Order" or (dt in ("Sales Invoice", "Fees", "Ticket Invoice") and doc.outstanding_amount > 0)) \
+	if (dt == "Sales Order" or (dt in ("Sales Invoice", "Fees", "Ticket Invoice", "Tour Invoice") and doc.outstanding_amount > 0)) \
 		or (dt=="Purchase Invoice" and doc.outstanding_amount < 0):
 			payment_type = "Receive"
 	else:
@@ -875,6 +879,9 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		outstanding_amount = doc.outstanding_amount
 	elif dt == "Ticket Invoice":
 		grand_total = doc.cust_grand_total_amount
+		outstanding_amount = doc.outstanding_amount
+	elif dt == "Tour Invoice":
+		grand_total = doc.cust_grand_total_av
 		outstanding_amount = doc.outstanding_amount
 	else:
 		if party_account_currency == doc.company_currency:
