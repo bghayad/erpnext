@@ -466,320 +466,85 @@ def get_timeline_data(doctype, name):
 
 def get_dashboard_info(party_type, party, loyalty_program=None):
 	current_fiscal_year = get_fiscal_year(nowdate(), as_dict=True)
-#	doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
-#	companies = {}
-	frappe.msgprint(_("Party Type is {0}").format(party_type))
-	if party_type != "Company":
-		doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
-		if party_type=="Customer":
-			companies = frappe.db.sql("""
-				select company from `tabSales Invoice`
-				where (docstatus = 1 and {0} = '{1}')
-				UNION
-				select company from `tabTicket Invoice`
-				where (docstatus = 1 and {0} = '{1}')
-				UNION
-				select company from `tabTour Invoice`
-				where (docstatus = 1 and {0} = '{1}')""".format(party_type.lower(), party), as_dict=1)
 
-#			doctype = "Sales Invoice"
-#			companies = frappe.get_all(doctype, filters={
-#				'docstatus': 1,
-#				party_type.lower(): party
-#			}, distinct=1, fields=['company'])
-#			doctype = "Ticket Invoice"
-#			companies.append(frappe.get_all(doctype, filters={
-#				'docstatus': 1,
-#				party_type.lower(): party
-#			}, distinct=1, fields=['company']))
-		else:
-			companies = frappe.db.sql("""
-				select company from `tabPurchase Invoice`
-				where (docstatus = 1 and {0} = '{1}')
-				UNION
-				select company from `tabTicket Invoice`
-				where (docstatus = 1 and {0} = '{1}')
-				UNION
-				select company from `tabTour Invoice`
-				where (docstatus = 1 and name in 
-				(select parent from `tabTour Invoice Item`
-				where {0} = '{1}' and docstatus = 1))""".format(party_type.lower(), party), as_dict=1)
+	doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
 
-#		doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
+	companies = frappe.get_all(doctype, filters={
+		'docstatus': 1,
+		party_type.lower(): party
+	}, distinct=1, fields=['company'])
 
-#		companies = frappe.get_all(doctype, filters={
-#			'docstatus': 1,
-#			party_type.lower(): party
-#		}, distinct=1, fields=['company'])
+#	frappe.msgprint(_("Companies is {0}").format(companies), alert=True)
+	frappe.msgprint(_("Companies is {0}").format(companies))
 
-#		frappe.msgprint(_("Companies is {0}").format(companies), alert=True)
-#		frappe.msgprint(_("Companies is {0}").format(companies))
+	company_wise_info = []
 
-#		companies_2 = frappe.db.sql("""
-#			select company from `tabSales Invoice`
-#			where (docstatus = 1 and {0} = '{1}')
-#			UNION
-#			select company from `tabTicket Invoice`
-#			where (docstatus = 1 and {0} = '{1}')""".format(party_type.lower(), party), as_dict=1)
-		companies_3 = []
-#		companies_4 = {}
-#		companies_4['company'] = "Brasilia"
-#		companies_3.append(companies_4)
-#		companies_3.append({'company':'Rabih'})
+	company_wise_grand_total = frappe.get_all(doctype,
+		filters={
+			'docstatus': 1,
+			party_type.lower(): party,
+			'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
+			},
+			group_by="company",
+			fields=["company", "sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
+		)
 
-#		for d in companies_2:
-#			companies_3.append({'company':d})
-#			frappe.msgprint(_("d is {0}").format(d))
+	loyalty_point_details = []
 
-#		frappe.msgprint(_("Companies is {0} and Companies_2 is {1}").format(companies, companies_2))
-
-		company_wise_info = []
-
-		company_wise_grand_total = frappe.get_all(doctype,
+	if party_type == "Customer":
+		loyalty_point_details = frappe._dict(frappe.get_all("Loyalty Point Entry",
 			filters={
-				'docstatus': 1,
-				party_type.lower(): party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
+				'customer': party,
+				'expiry_date': ('>=', getdate()),
 				},
 				group_by="company",
-				fields=["company", "sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
-			)
+				fields=["company", "sum(loyalty_points) as loyalty_points"],
+				as_list =1
+			))
 
-		frappe.msgprint(_("company_wise_grand_total for sales invoice is {0}").format(company_wise_grand_total))
+	company_wise_billing_this_year = frappe._dict()
 
-		if party_type=="Customer":
-			company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
-				filters={
-					'docstatus': 1,
-					party_type.lower(): party,
-					'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-					},
-					group_by="company",
-					fields=["company", "sum(cust_grand_total) as cust_grand_total"]
-				)
+	for d in company_wise_grand_total:
+		company_wise_billing_this_year.setdefault(
+			d.company,{
+				"grand_total": d.grand_total,
+				"base_grand_total": d.base_grand_total
+			})
 
 
-			company_wise_grand_total_tour = frappe.get_all("Tour Invoice",
-				filters={
-					'docstatus': 1,
-					party_type.lower(): party,
-					'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-					},
-					group_by="company",
-					fields=["company", "sum(cust_grand_total) as cust_grand_total"]
-				)
+	company_wise_total_unpaid = frappe._dict(frappe.db.sql("""
+		select company, sum(debit_in_account_currency) - sum(credit_in_account_currency)
+		from `tabGL Entry`
+		where party_type = %s and party=%s
+		group by company""", (party_type, party)))
 
-			for d in company_wise_grand_total:
-				for r in company_wise_grand_total_ticket:
-					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.cust_grand_total)
-						break
+	for d in companies:
+		company_default_currency = frappe.db.get_value("Company", d.company, 'default_currency')
+		party_account_currency = get_party_account_currency(party_type, party, d.company)
 
-			frappe.msgprint(_("company_wise_grand_total after ticket amounts is {0}").format(company_wise_grand_total))
+		if party_account_currency==company_default_currency:
+			billing_this_year = flt(company_wise_billing_this_year.get(d.company,{}).get("base_grand_total"))
+		else:
+			billing_this_year = flt(company_wise_billing_this_year.get(d.company,{}).get("grand_total"))
 
-			for d in company_wise_grand_total:
-				for r in company_wise_grand_total_tour:
-					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.cust_grand_total)
-						break
+		total_unpaid = flt(company_wise_total_unpaid.get(d.company))
 
-			frappe.msgprint(_("company_wise_grand_total after tour amounts is {0}").format(company_wise_grand_total))
-
-		elif party_type == "Supplier":
-
-			company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
-				filters={
-					'docstatus': 1,
-					party_type.lower(): party,
-					'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-					},
-					group_by="company",
-					fields=["company", "sum(supp_grand_total) as supp_grand_total"]
-				)
-
-			company_wise_grand_total_tour = frappe.db.sql("""
-				select a.company, sum(b.supp_total_av) as supp_total_av 
-				from `tabTour Invoice` a, `tabTour Invoice Item` b
-				where (a.docstatus = 1 and a.name in 
-				(select b.parent from `tabTour Invoice Item` b
-				where b.{0} = '{1}' and b.docstatus = 1))
-				group by a.company
-				""".format(party_type.lower(), party), as_dict=1)
-
-			for d in company_wise_grand_total:
-				for r in company_wise_grand_total_ticket:
-					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.supp_grand_total)
-						break
-
-			frappe.msgprint(_("Purchasing: company_wise_grand_total after ticket amounts is {0}").format(company_wise_grand_total))
-
-
-			for d in company_wise_grand_total:
-				for r in company_wise_grand_total_tour:
-					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.supp_total_av)
-						break
-
-			frappe.msgprint(_("Purchasing: company_wise_grand_total after tour amounts is {0}").format(company_wise_grand_total))
-
-		loyalty_point_details = []
-
-		if party_type == "Customer":
-			loyalty_point_details = frappe._dict(frappe.get_all("Loyalty Point Entry",
-				filters={
-					'customer': party,
-					'expiry_date': ('>=', getdate()),
-					},
-					group_by="company",
-					fields=["company", "sum(loyalty_points) as loyalty_points"],
-					as_list =1
-				))
-
-		company_wise_billing_this_year = frappe._dict()
-
-		for d in company_wise_grand_total:
-			company_wise_billing_this_year.setdefault(
-				d.company,{
-					"grand_total": d.grand_total,
-					"base_grand_total": d.base_grand_total
-				})
-
-		company_wise_total_unpaid = frappe._dict(frappe.db.sql("""
-			select company, sum(debit_in_account_currency) - sum(credit_in_account_currency)
-			from `tabGL Entry`
-			where party_type = %s and party=%s
-			group by company""", (party_type, party)))
-
-		for d in companies:
-			company_default_currency = frappe.db.get_value("Company", d.company, 'default_currency')
-			party_account_currency = get_party_account_currency(party_type, party, d.company)
-
-			if party_account_currency==company_default_currency:
-				billing_this_year = flt(company_wise_billing_this_year.get(d.company,{}).get("base_grand_total"))
-			else:
-				billing_this_year = flt(company_wise_billing_this_year.get(d.company,{}).get("grand_total"))
-
-			total_unpaid = flt(company_wise_total_unpaid.get(d.company))
-
-			if loyalty_point_details:
-				loyalty_points = loyalty_point_details.get(d.company)
-
-			info = {}
-			info["billing_this_year"] = flt(billing_this_year) if billing_this_year else 0
-			info["currency"] = party_account_currency
-			info["total_unpaid"] = flt(total_unpaid) if total_unpaid else 0
-			info["company"] = d.company
-
-			if party_type == "Customer" and loyalty_point_details:
-				info["loyalty_points"] = loyalty_points
-
-			if party_type == "Supplier":
-				info["total_unpaid"] = -1 * info["total_unpaid"]
-
-			company_wise_info.append(info)
-	else:
-
-		company_wise_total_unpaid_sales = frappe.db.sql("""
-			select (sum(debit_in_account_currency) - sum(credit_in_account_currency)) as total_unpaid
-			from `tabGL Entry`
-			where party_type = 'Customer' and company = '{0}'""".format(party), as_dict=1)
-
-		company_wise_total_unpaid_purchases = frappe.db.sql("""
-			select (sum(debit_in_account_currency) - sum(credit_in_account_currency)) as total_unpaid
-			from `tabGL Entry`
-			where party_type = 'Supplier' and company = '{0}'""".format(party), as_dict=1)
-
-
-		frappe.msgprint(_("company_wise_total_unpaid is {0} and Total Unpaid is is {1}").format(company_wise_total_unpaid_sales, company_wise_total_unpaid_sales[0]['total_unpaid']))
-
-		company_wise_info = []
-
-		a = company_wise_grand_total = frappe.get_all("Sales Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
-			)
-
-		frappe.msgprint(_("company_wise_grand_total for sales invoices is {0}").format(company_wise_grand_total))
-
-		b = company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(cust_grand_total) as cust_grand_total"]
-			)
-
-
-		c = company_wise_grand_total_tour = frappe.get_all("Tour Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(cust_grand_total) as cust_grand_total"]
-			)
-
-		a[0].base_grand_total = (float(a[0].base_grand_total) if a[0].base_grand_total else 0) + (float(b[0].cust_grand_total) if b[0].cust_grand_total else 0)+ (float(c[0].cust_grand_total) if c[0].cust_grand_total else 0)
-
-		frappe.msgprint(_("company_wise_grand_total for ticket is {0} and for tour is {1} and the sum for all is {2}").format(b[0].cust_grand_total,c[0].cust_grand_total,a[0].base_grand_total))
+		if loyalty_point_details:
+			loyalty_points = loyalty_point_details.get(d.company)
 
 		info = {}
-		info["billing_this_year"] = float(a[0].base_grand_total) if a[0].base_grand_total else 0
-		info["currency"] = frappe.db.get_value("Company", {'name': party}, "default_currency")
-		info["total_unpaid"] = company_wise_total_unpaid_sales[0]['total_unpaid'] if company_wise_total_unpaid_sales[0]['total_unpaid'] else 0
-		info["company"] = "Sales"
+		info["billing_this_year"] = flt(billing_this_year) if billing_this_year else 0
+		info["currency"] = party_account_currency
+		info["total_unpaid"] = flt(total_unpaid) if total_unpaid else 0
+		info["company"] = d.company
 
-#		frappe.msgprint(_("Party type is {0}, party is {1}, billing this year is {2}, currency is {3}, total_unpaid is {4} and company is {5}").format(party_type,party, info["billing_this_year"], info["currency"], info["total_unpaid"], info["company"]))
+		if party_type == "Customer" and loyalty_point_details:
+			info["loyalty_points"] = loyalty_points
 
-		company_wise_info.append(info)
-
-		a = company_wise_grand_total = frappe.get_all("Purchase Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
-			)
-
-		frappe.msgprint(_("company_wise_grand_total for sales invoices is {0}").format(company_wise_grand_total))
-
-		b = company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(supp_grand_total) as supp_grand_total"]
-			)
-
-
-		c = company_wise_grand_total_tour = frappe.get_all("Tour Invoice",
-			filters={
-				'docstatus': 1,
-				'company': party,
-				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
-				},
-				fields=["sum(supp_grand_total) as supp_grand_total"]
-			)
-
-		a[0].base_grand_total = (float(a[0].base_grand_total) if a[0].base_grand_total else 0) + (float(b[0].supp_grand_total) if b[0].supp_grand_total else 0)+ (float(c[0].supp_grand_total) if c[0].supp_grand_total else 0)
-
-		info = {}
-		info["billing_this_year"] = float(a[0].base_grand_total) if a[0].base_grand_total else 0
-		info["currency"] = frappe.db.get_value("Company", {'name': party}, "default_currency")
-		info["total_unpaid"] = -1 * company_wise_total_unpaid_purchases[0]['total_unpaid'] if company_wise_total_unpaid_purchases[0]['total_unpaid'] else 0
-		info["company"] = "Purchasing"
+		if party_type == "Supplier":
+			info["total_unpaid"] = -1 * info["total_unpaid"]
 
 		company_wise_info.append(info)
-
-	frappe.msgprint(_("Company Wise Info is {0}").format(company_wise_info))
 
 	return company_wise_info
 

@@ -13,6 +13,8 @@ from frappe.cache_manager import clear_defaults_cache
 from frappe.model.document import Document
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils.nestedset import NestedSet
+from erpnext.accounts.party import validate_party_accounts, get_dashboard_info, get_timeline_data # keep this
+
 
 class Company(NestedSet):
 	nsm_parent_field = 'parent_company'
@@ -20,6 +22,11 @@ class Company(NestedSet):
 	def onload(self):
 		load_address_and_contact(self, "company")
 		self.get("__onload")["transactions_exist"] = self.check_if_transactions_exist()
+		self.load_dashboard_info()
+
+	def load_dashboard_info(self):
+		info = get_dashboard_info(self.doctype, self.name)
+		self.set_onload('dashboard_info', info)
 
 	def check_if_transactions_exist(self):
 		exists = False
