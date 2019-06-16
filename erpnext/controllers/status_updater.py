@@ -52,6 +52,22 @@ status_map = {
 		["Overdue", "eval:self.outstanding_amount > 0 and getdate(self.due_date) < getdate(nowdate()) and self.docstatus==1"],
 		["Cancelled", "eval:self.docstatus==2"],
 	],
+	"Ticket Invoice": [
+		["Draft", None],
+		["Submitted", "eval:self.docstatus==1"],
+		["Paid", "eval:self.outstanding_amount<=0 and self.docstatus==1"],
+		["Unpaid", "eval:self.outstanding_amount > 0 and getdate(self.due_date) >= getdate(nowdate()) and self.docstatus==1"],
+		["Overdue", "eval:self.outstanding_amount > 0 and getdate(self.due_date) < getdate(nowdate()) and self.docstatus==1"],
+		["Cancelled", "eval:self.docstatus==2"],
+	],
+	"Tour Invoice": [
+		["Draft", None],
+		["Submitted", "eval:self.docstatus==1"],
+		["Paid", "eval:self.outstanding_amount<=0 and self.docstatus==1"],
+		["Unpaid", "eval:self.outstanding_amount > 0 and getdate(self.due_date) >= getdate(nowdate()) and self.docstatus==1"],
+		["Overdue", "eval:self.outstanding_amount > 0 and getdate(self.due_date) < getdate(nowdate()) and self.docstatus==1"],
+		["Cancelled", "eval:self.docstatus==2"],
+	],
 	"Purchase Invoice": [
 		["Draft", None],
 		["Submitted", "eval:self.docstatus==1"],
@@ -119,7 +135,6 @@ class StatusUpdater(Document):
 			if self.get('amended_from'):
 				self.status = 'Draft'
 			return
-
 		if self.doctype in status_map:
 			_status = self.status
 

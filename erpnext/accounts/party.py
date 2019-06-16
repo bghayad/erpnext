@@ -468,7 +468,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 	current_fiscal_year = get_fiscal_year(nowdate(), as_dict=True)
 #	doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
 #	companies = {}
-	frappe.msgprint(_("Party Type is {0}").format(party_type))
 	if party_type != "Company":
 		doctype = "Sales Invoice" if party_type=="Customer" else "Purchase Invoice"
 		if party_type=="Customer":
@@ -545,8 +544,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 				fields=["company", "sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
 			)
 
-		frappe.msgprint(_("company_wise_grand_total for sales invoice is {0}").format(company_wise_grand_total))
-
 		if party_type=="Customer":
 			company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
 				filters={
@@ -558,7 +555,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 					fields=["company", "sum(cust_grand_total) as cust_grand_total"]
 				)
 
-
 			company_wise_grand_total_tour = frappe.get_all("Tour Invoice",
 				filters={
 					'docstatus': 1,
@@ -569,13 +565,21 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 					fields=["company", "sum(cust_grand_total) as cust_grand_total"]
 				)
 
+			for d in companies:
+				i = 0
+				for r in company_wise_grand_total:
+					if d.company == r.company:
+						i = 1
+						break
+				if i == 0:
+					company_wise_grand_total.append(frappe._dict({'company': d.company, 'grand_total': 0, 'base_grand_total': 0}));
+
+					
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_ticket:
 					if d.company == r.company:
 						d.base_grand_total = float(d.base_grand_total) + float(r.cust_grand_total)
 						break
-
-			frappe.msgprint(_("company_wise_grand_total after ticket amounts is {0}").format(company_wise_grand_total))
 
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_tour:
@@ -583,7 +587,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 						d.base_grand_total = float(d.base_grand_total) + float(r.cust_grand_total)
 						break
 
-			frappe.msgprint(_("company_wise_grand_total after tour amounts is {0}").format(company_wise_grand_total))
 
 		elif party_type == "Supplier":
 
@@ -612,16 +615,11 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 						d.base_grand_total = float(d.base_grand_total) + float(r.supp_grand_total)
 						break
 
-			frappe.msgprint(_("Purchasing: company_wise_grand_total after ticket amounts is {0}").format(company_wise_grand_total))
-
-
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_tour:
 					if d.company == r.company:
 						d.base_grand_total = float(d.base_grand_total) + float(r.supp_total_av)
 						break
-
-			frappe.msgprint(_("Purchasing: company_wise_grand_total after tour amounts is {0}").format(company_wise_grand_total))
 
 		loyalty_point_details = []
 
@@ -690,9 +688,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 			from `tabGL Entry`
 			where party_type = 'Supplier' and company = '{0}'""".format(party), as_dict=1)
 
-
-		frappe.msgprint(_("company_wise_total_unpaid is {0} and Total Unpaid is is {1}").format(company_wise_total_unpaid_sales, company_wise_total_unpaid_sales[0]['total_unpaid']))
-
 		company_wise_info = []
 
 		a = company_wise_grand_total = frappe.get_all("Sales Invoice",
@@ -703,8 +698,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 				},
 				fields=["sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
 			)
-
-		frappe.msgprint(_("company_wise_grand_total for sales invoices is {0}").format(company_wise_grand_total))
 
 		b = company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
 			filters={
@@ -727,7 +720,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 
 		a[0].base_grand_total = (float(a[0].base_grand_total) if a[0].base_grand_total else 0) + (float(b[0].cust_grand_total) if b[0].cust_grand_total else 0)+ (float(c[0].cust_grand_total) if c[0].cust_grand_total else 0)
 
-		frappe.msgprint(_("company_wise_grand_total for ticket is {0} and for tour is {1} and the sum for all is {2}").format(b[0].cust_grand_total,c[0].cust_grand_total,a[0].base_grand_total))
 
 		info = {}
 		info["billing_this_year"] = float(a[0].base_grand_total) if a[0].base_grand_total else 0
@@ -747,8 +739,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 				},
 				fields=["sum(grand_total) as grand_total", "sum(base_grand_total) as base_grand_total"]
 			)
-
-		frappe.msgprint(_("company_wise_grand_total for sales invoices is {0}").format(company_wise_grand_total))
 
 		b = company_wise_grand_total_ticket = frappe.get_all("Ticket Invoice",
 			filters={
@@ -778,8 +768,6 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 		info["company"] = "Purchasing"
 
 		company_wise_info.append(info)
-
-	frappe.msgprint(_("Company Wise Info is {0}").format(company_wise_info))
 
 	return company_wise_info
 
