@@ -54,8 +54,8 @@ class SalesInvoice(SellingController):
 
 	def set_indicator(self):
 		"""Set indicator for portal"""
-		if cint(self.is_return) == 1:
-			self.indicator_title = _("Return")
+		if self.outstanding_amount < 0:
+			self.indicator_title = _("Credit Note Issued")
 			self.indicator_color = "darkgrey"
 		elif self.outstanding_amount > 0 and getdate(self.due_date) >= getdate(nowdate()):
 			self.indicator_color = "orange"
@@ -63,8 +63,8 @@ class SalesInvoice(SellingController):
 		elif self.outstanding_amount > 0 and getdate(self.due_date) < getdate(nowdate()):
 			self.indicator_color = "red"
 			self.indicator_title = _("Overdue")
-		elif self.outstanding_amount < 0:
-			self.indicator_title = _("Credit Note Issued")
+		elif cint(self.is_return) == 1:
+			self.indicator_title = _("Return")
 			self.indicator_color = "darkgrey"
 		else:
 			self.indicator_color = "green"
@@ -487,7 +487,7 @@ class SalesInvoice(SellingController):
 		"""Set against account for debit to account"""
 		against_acc = []
 		for d in self.get('items'):
-			if d.income_account not in against_acc:
+			if d.income_account and d.income_account not in against_acc:
 				against_acc.append(d.income_account)
 		self.against_income_account = ','.join(against_acc)
 
