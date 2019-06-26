@@ -25,7 +25,8 @@ class GLEntry(Document):
 		if not self.flags.from_repost:
 			self.check_pl_account()
 			self.validate_party()
-			self.validate_currency()
+			if self.against_voucher_type != 'Tour Invoice':
+				self.validate_currency()
 
 	def on_update_with_args(self, adv_adj, update_outstanding = 'Yes', from_repost=False):
 		if not from_repost:

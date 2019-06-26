@@ -582,6 +582,8 @@ def get_outstanding_reference_documents(args):
 		if party_account_currency != company_currency:
 			if d.voucher_type in ("Sales Invoice", "Purchase Invoice", "Expense Claim"):
 				d["exchange_rate"] = frappe.db.get_value(d.voucher_type, d.voucher_no, "conversion_rate")
+			elif d.voucher_type == "Tour Invoice":
+				 d["exchange_rate"] = 1 / (frappe.db.get_value(d.voucher_type, d.voucher_no, "customer_exchange_rate"))
 			elif d.voucher_type == "Journal Entry":
 				d["exchange_rate"] = get_exchange_rate(
 					party_account_currency,	company_currency, d.posting_date
@@ -769,7 +771,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 		outstanding_amount = ref_doc.get("outstanding_amount")
 	elif reference_doctype == "Tour Invoice":
 		total_amount = ref_doc.get("cust_grand_total_av")
-		exchange_rate = 1
+		exchange_rate = 1 / (ref_doc.get("customer_exchange_rate"))
 		outstanding_amount = ref_doc.get("outstanding_amount")	
 	elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
 		total_amount = ref_doc.get("total_amount")

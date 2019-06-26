@@ -359,11 +359,12 @@ class AccountsController(TransactionBase):
 		if not account_currency:
 			account_currency = get_account_currency(gl_dict.account)
 
-		if gl_dict.account and self.doctype not in ["Journal Entry",
+		if gl_dict.account and self.doctype not in ["Journal Entry", "Tour Invoice", "Ticket Invoice",
 													"Period Closing Voucher", "Payment Entry"]:
+			
 			self.validate_account_currency(gl_dict.account, account_currency)
 			set_balance_in_account_currency(gl_dict, account_currency, self.get("conversion_rate"),
-											self.company_currency)
+										self.company_currency)
 
 		return gl_dict
 
@@ -373,6 +374,7 @@ class AccountsController(TransactionBase):
 				frappe.throw("Item quantity can not be zero")
 
 	def validate_account_currency(self, account, account_currency=None):
+
 		valid_currency = [self.company_currency]
 		if self.get("currency") and self.currency != self.company_currency:
 			valid_currency.append(self.currency)

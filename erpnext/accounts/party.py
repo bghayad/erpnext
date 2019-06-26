@@ -562,7 +562,7 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 					'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
 					},
 					group_by="company",
-					fields=["company", "sum(cust_grand_total) as cust_grand_total"]
+					fields=["company", "sum(cust_grand_total) as cust_grand_total", "sum(base_cust_grand_total) as base_cust_grand_total"]
 				)
 
 			for d in companies:
@@ -584,7 +584,8 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_tour:
 					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.cust_grand_total)
+						d.base_grand_total = float(d.base_grand_total) + float(r.base_cust_grand_total)
+						d.grand_total = float(d.grand_total) + float(r.cust_grand_total)
 						break
 
 
@@ -601,13 +602,22 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 				)
 
 			company_wise_grand_total_tour = frappe.db.sql("""
-				select a.company, sum(b.supp_total_av) as supp_total_av 
+				select a.company, sum(b.supp_total_av) as supp_total_av, sum(b.base_supp_total_av) as base_supp_total_av 
 				from `tabTour Invoice` a, `tabTour Invoice Item` b
 				where (a.docstatus = 1 and a.name in 
 				(select b.parent from `tabTour Invoice Item` b
 				where b.{0} = '{1}' and b.docstatus = 1))
 				group by a.company
 				""".format(party_type.lower(), party), as_dict=1)
+
+			for d in companies:
+				i = 0
+				for r in company_wise_grand_total:
+					if d.company == r.company:
+						i = 1
+						break
+				if i == 0:
+					company_wise_grand_total.append(frappe._dict({'company': d.company, 'grand_total': 0, 'base_grand_total': 0}));
 
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_ticket:
@@ -618,7 +628,8 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 			for d in company_wise_grand_total:
 				for r in company_wise_grand_total_tour:
 					if d.company == r.company:
-						d.base_grand_total = float(d.base_grand_total) + float(r.supp_total_av)
+						d.base_grand_total = float(d.base_grand_total) + float(r.base_supp_total_av)
+						d.grand_total = float(d.grand_total) + float(r.supp_total_av)
 						break
 
 		loyalty_point_details = []
@@ -715,7 +726,7 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 				'company': party,
 				'posting_date': ('between', [current_fiscal_year.year_start_date, current_fiscal_year.year_end_date])
 				},
-				fields=["sum(cust_grand_total) as cust_grand_total"]
+				fields=["sum(cust_grand_total/customer_exchange_rate) as cust_grand_total"]
 			)
 
 		a[0].base_grand_total = (float(a[0].base_grand_total) if a[0].base_grand_total else 0) + (float(b[0].cust_grand_total) if b[0].cust_grand_total else 0)+ (float(c[0].cust_grand_total) if c[0].cust_grand_total else 0)
