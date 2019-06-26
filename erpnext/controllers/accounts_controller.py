@@ -363,7 +363,7 @@ class AccountsController(TransactionBase):
 		if not account_currency:
 			account_currency = get_account_currency(gl_dict.account)
 
-		frappe.msgprint(_("Test 2 for Upgrade"))
+		frappe.msgprint(_("Test 3 for Upgrade"))
 		if gl_dict.account and self.doctype not in ["Journal Entry", "Tour Invoice", "Ticket Invoice",
 													"Period Closing Voucher", "Payment Entry"]:
 			
