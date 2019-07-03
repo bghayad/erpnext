@@ -835,18 +835,18 @@
                 "Invoices": {
                     "Ordinary Clients": {
                         "account_type": "Receivable",
-						"account_number": "41110"
+			"account_number": "41110"
                     }, 
                     "Doubtful Clients": {
                         "account_type": "Receivable",
-						"account_number": "41150"
+			"account_number": "41150"
                     },
                     "Discounts And Allowances": {
 						"account_number": "41190",
 						"account_type": "Receivable"
                     },
-					"account_number": "411",
-                    "account_type": "Receivable"
+			"account_number": "411",
+			"account_type": "Receivable"
                 }, 
                 "Notes Receivable (Clients)": {
 					"account_number": "413",
@@ -951,6 +951,7 @@
 					},
 					"Value Added Tax on Deductible Purchase": {
 						"account_type": "Tax",
+						"tax_rate" : "11",
 						"account_number": "44261"
 						
 					},
@@ -1151,8 +1152,8 @@
 						"account_number": "40190",
 						"account_type": "Payable"
                     },					
-					"account_number": "401",
-                    "account_type": "Payable"
+			"account_number": "401",
+			"account_type": "Payable"
                 }, 
                 "Fixed Assets Suppliers": {
 					"Invoices": {
@@ -1288,6 +1289,8 @@
 						"account_number": "44270"
 					},
 					"Collected VAT on Services": {
+						"account_type": "Tax",
+						"tax_rate" : "11",
 						"account_number": "44271"
 					},
 					"Collected VAT on Cash Money Delivery Operation": {

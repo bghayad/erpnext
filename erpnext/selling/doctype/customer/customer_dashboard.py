@@ -20,7 +20,7 @@ def get_data():
 			},
 			{
 				'label': _('Orders'),
-				'items': ['Sales Order', 'Delivery Note', 'Sales Invoice']
+				'items': ['Sales Order', 'Delivery Note', 'Sales Invoice', 'Ticket Invoice', 'Tour Invoice']
 			},
 			{
 				'label': _('Support'),
