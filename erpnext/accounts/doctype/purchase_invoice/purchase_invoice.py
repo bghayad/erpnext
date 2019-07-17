@@ -19,6 +19,7 @@ from erpnext.accounts.doctype.gl_entry.gl_entry import update_outstanding_amt
 from erpnext.buying.utils import check_for_closed_status
 from erpnext.accounts.general_ledger import get_round_off_account_and_cost_center
 from erpnext.assets.doctype.asset.asset import get_asset_account, is_cwip_accounting_disabled
+from erpnext.setup.doctype.company.company import update_company_current_month_purchase
 from frappe.model.mapper import get_mapped_doc
 from six import iteritems
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import validate_inter_company_party, update_linked_invoice,\
@@ -350,6 +351,10 @@ class PurchaseInvoice(BuyingController):
 		self.make_gl_entries()
 
 		self.update_project()
+
+		if frappe.db.get_single_value('Selling Settings', 'sales_update_frequency') == "Each Transaction":
+			update_company_current_month_purchase(self.company)
+
 		update_linked_invoice(self.doctype, self.name, self.inter_company_invoice_reference)
 
 	def make_gl_entries(self, gl_entries=None, repost_future_gle=True, from_repost=False):
@@ -783,6 +788,9 @@ class PurchaseInvoice(BuyingController):
 		self.make_gl_entries_on_cancel()
 		self.update_project()
 		frappe.db.set(self, 'status', 'Cancelled')
+
+		if frappe.db.get_single_value('Selling Settings', 'sales_update_frequency') == "Each Transaction":
+			update_company_current_month_purchase(self.company)
 
 		unlink_inter_company_invoice(self.doctype, self.name, self.inter_company_invoice_reference)
 

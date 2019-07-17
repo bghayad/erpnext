@@ -200,7 +200,6 @@ class Customer(TransactionBase):
 			frappe.msgprint(_("Multiple Loyalty Program found for the Customer. Please select manually."))
 
 def get_timeline_data(doctype, name):
-
 	'''returns timeline data based on sales order, delivery note, sales invoice, quotation, issue and project'''
 	from six import iteritems
 	from frappe.utils import (cint, cstr, flt, formatdate, get_timestamp, getdate, now_datetime, random_string, strip)
@@ -208,7 +207,7 @@ def get_timeline_data(doctype, name):
 	out = {}
 	'''sales order'''
 	items = dict(frappe.db.sql('''select transaction_date, count(*)
-		from `tabSales Order` where customer=%s
+		from `tabSales Order` where company=%s
 		and transaction_date > date_sub(curdate(), interval 1 year)
 		group by transaction_date''', name))
 
@@ -216,9 +215,10 @@ def get_timeline_data(doctype, name):
 		timestamp = get_timestamp(date)
 		out.update({timestamp: count})
 
+
 	'''delivery note'''
 	items = dict(frappe.db.sql('''select posting_date, count(*)
-		from `tabDelivery Note` where customer=%s
+		from `tabDelivery Note` where company=%s
 		and posting_date > date_sub(curdate(), interval 1 year)
 		group by posting_date''', name))
 
@@ -231,7 +231,7 @@ def get_timeline_data(doctype, name):
 	
 	'''sales invoice'''
 	items = dict(frappe.db.sql('''select posting_date, count(*)
-		from `tabSales Invoice` where customer=%s
+		from `tabSales Invoice` where company=%s
 		and posting_date > date_sub(curdate(), interval 1 year)
 		group by posting_date''', name))
 
@@ -241,36 +241,10 @@ def get_timeline_data(doctype, name):
 			out.update({timestamp: count})
 		else :
 			out.update({timestamp: out[timestamp] + count})
-
-	'''ticket invoice'''
-	items = dict(frappe.db.sql('''select posting_date, count(*)
-		from `tabTicket Invoice` where customer=%s
-		and posting_date > date_sub(curdate(), interval 1 year)
-		group by posting_date''', name))
-
-	for date, count in iteritems(items):
-		timestamp = get_timestamp(date)
-		if not timestamp in out:
-			out.update({timestamp: count})
-		else :
-			out.update({timestamp: out[timestamp] + count})
-
-	'''tour invoice'''
-	items = dict(frappe.db.sql('''select posting_date, count(*)
-		from `tabTour Invoice` where customer=%s
-		and posting_date > date_sub(curdate(), interval 1 year)
-		group by posting_date''', name))
-
-	for date, count in iteritems(items):
-		timestamp = get_timestamp(date)
-		if not timestamp in out:
-			out.update({timestamp: count})
-		else :
-			out.update({timestamp: out[timestamp] + count})
-
+	
 	'''quotation'''
 	items = dict(frappe.db.sql('''select transaction_date, count(*)
-		from `tabQuotation` where customer=%s
+		from `tabQuotation` where company=%s
 		and transaction_date > date_sub(curdate(), interval 1 year)
 		group by transaction_date''', name))
 
@@ -283,7 +257,7 @@ def get_timeline_data(doctype, name):
 	
 	'''issue'''
 	items = dict(frappe.db.sql('''select opening_date, count(*)
-		from `tabIssue` where customer=%s
+		from `tabIssue` where company=%s
 		and opening_date > date_sub(curdate(), interval 1 year)
 		group by opening_date''', name))
 
@@ -297,7 +271,7 @@ def get_timeline_data(doctype, name):
 	'''project'''
 	
 	items = dict(frappe.db.sql('''select expected_start_date, count(*)
-		from `tabProject` where customer=%s
+		from `tabProject` where company=%s
 		and expected_start_date > date_sub(curdate(), interval 1 year)
 		group by expected_start_date''', name))
 

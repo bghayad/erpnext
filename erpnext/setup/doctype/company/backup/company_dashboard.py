@@ -4,14 +4,14 @@ from frappe import _
 def get_data():
 	return {
 		'graph': True,
-		'graph_method': "erpnext.setup.doctype.company.company.get_monthly_goal_graph_data",
+		'graph_method': "frappe.utils.goal.get_monthly_goal_graph_data",
 		'graph_method_args': {
 			'title': _('Sales'),
 			'goal_value_field': 'monthly_sales_target',
 			'goal_total_field': 'total_monthly_sales',
 			'goal_history_field': 'sales_monthly_history',
-			'goal_doctype': ['Sales Invoice', 'Purchase Invoice', 'Ticket Invoice', 'Tour Invoice'],
-#			'goal_doctype': 'Sales Invoice',
+#			'goal_doctype': ['Sales Invoice', 'Ticket Invoice', 'Tour Invoice', 'Purchase Invoice'],
+			'goal_doctype': 'Sales Invoice',
 			'goal_doctype_link': 'company',
 			'goal_field': 'base_grand_total',
 			'date_field': 'posting_date',
