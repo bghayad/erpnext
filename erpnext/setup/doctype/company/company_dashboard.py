@@ -18,15 +18,21 @@ def get_data():
 			'aggregation': 'sum'
 		},
 
+		'heatmap': True,
+		'heatmap_message': _('This is based on transactions against this Company. See dashboard below for details'),
 		'fieldname': 'company',
 		'transactions': [
 			{
-				'label': _('Pre Sales'),
-				'items': ['Quotation']
+				'label': _('Sales'),
+				'items': ['Sales Order', 'Delivery Note', 'Sales Invoice']
 			},
 			{
-				'label': _('Orders'),
-				'items': ['Sales Order', 'Delivery Note', 'Sales Invoice']
+				'label': _('Purchase'),
+				'items': ['Purchase Order', 'Purchase Receipt', 'Purchase Invoice']
+			},
+			{
+				'label': _('Pre Sales'),
+				'items': ['Quotation']
 			},
 			{
 				'label': _('Support'),

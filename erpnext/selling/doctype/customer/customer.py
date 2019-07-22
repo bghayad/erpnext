@@ -9,7 +9,7 @@ import frappe.defaults
 from frappe.utils import flt, cint, cstr, today
 from frappe.desk.reportview import build_match_conditions, get_filters_cond
 from erpnext.utilities.transaction_base import TransactionBase
-from erpnext.accounts.party import validate_party_accounts, get_dashboard_info, get_timeline_data # keep this
+from erpnext.accounts.party import validate_party_accounts, get_dashboard_info#, get_timeline_data # keep this
 from frappe.contacts.address_and_contact import load_address_and_contact, delete_contact_and_address
 from frappe.model.rename_doc import update_linked_doctypes
 
@@ -219,6 +219,108 @@ def get_loyalty_programs(doc):
 			lp_details.append(loyalty_program.name)
 
 	return lp_details
+
+def get_timeline_data(doctype, name):
+	'''returns timeline data based on sales order, delivery note, sales invoice, quotation, issue, project and opportunity'''
+	from six import iteritems
+	from frappe.utils import (cint, cstr, flt, formatdate, get_timestamp, getdate, now_datetime, random_string, strip)
+
+	out = {}
+	'''sales order'''
+	items = dict(frappe.db.sql('''select transaction_date, count(*)
+		from `tabSales Order` where customer_name=%s
+		and transaction_date > date_sub(curdate(), interval 1 year)
+		group by transaction_date''', name))
+
+	for date, count in iteritems(items):
+		timestamp = get_timestamp(date)
+		out.update({timestamp: count})
+
+	'''delivery note'''
+	items = dict(frappe.db.sql('''select posting_date, count(*)
+		from `tabDelivery Note` where customer_name=%s
+		and posting_date > date_sub(curdate(), interval 1 year)
+		group by posting_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+
+	'''sales invoice'''
+	items = dict(frappe.db.sql('''select posting_date, count(*)
+		from `tabSales Invoice` where customer_name=%s
+		and posting_date > date_sub(curdate(), interval 1 year)
+		group by posting_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+	
+	'''quotation'''
+	items = dict(frappe.db.sql('''select transaction_date, count(*)
+		from `tabQuotation` where customer_name=%s
+		and transaction_date > date_sub(curdate(), interval 1 year)
+		group by transaction_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+
+	'''opportunity'''
+	items = dict(frappe.db.sql('''select transaction_date, count(*)
+		from `tabOpportunity` where customer_name=%s
+		and transaction_date > date_sub(curdate(), interval 1 year)
+		group by transaction_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+
+	'''issue'''
+	items = dict(frappe.db.sql('''select opening_date, count(*)
+		from `tabIssue` where customer=%s
+		and opening_date > date_sub(curdate(), interval 1 year)
+		group by opening_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+
+	'''project'''
+	items = dict(frappe.db.sql('''select expected_start_date, count(*)
+		from `tabProject` where customer=%s
+		and expected_start_date > date_sub(curdate(), interval 1 year)
+		group by expected_start_date''', name))
+
+	if len(items):
+		for date, count in iteritems(items):
+			timestamp = get_timestamp(date)
+			if not timestamp in out:
+				out.update({timestamp: count})
+			else :
+				out.update({timestamp: out[timestamp] + count})
+
+	return out
 
 def get_customer_list(doctype, txt, searchfield, start, page_len, filters=None):
 	if frappe.db.get_default("cust_master_name") == "Customer Name":
