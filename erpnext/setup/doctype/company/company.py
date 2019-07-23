@@ -418,19 +418,38 @@ def update_company_current_month_sales(company):
 	monthly_total = results[0]['total'] if len(results) > 0 else 0
 
 	frappe.db.set_value("Company", company, "total_monthly_sales", monthly_total)
+	
+def update_company_current_month_purchase(company):
+	current_month_year = formatdate(today(), "MM-yyyy")
+
+	results = frappe.db.sql('''
+		select
+			sum(base_grand_total) as total, date_format(posting_date, '%m-%Y') as month_year
+		from
+			`tabPurchase Invoice`
+		where
+			date_format(posting_date, '%m-%Y')="{0}"
+			and docstatus = 1
+			and company = "{1}"
+		group by
+			month_year
+	'''.format(current_month_year, frappe.db.escape(company)), as_dict = True)
+
+	monthly_total = results[0]['total'] if len(results) > 0 else 0
+
+	frappe.db.set_value("Company", company, "total_monthly_purchase", monthly_total)
 
 def update_company_monthly_sales(company):
 	'''Cache past year monthly sales of every company based on sales invoices'''
-	from frappe.utils.goal import get_monthly_results
+#	from frappe.utils.goal import get_monthly_results
 	import json
 	filter_str = "company = '{0}' and status != 'Draft' and docstatus=1".format(frappe.db.escape(company))
 
 #	month_to_value_dict = get_monthly_results("Sales Invoice", "base_grand_total",
 #		"posting_date", filter_str, "sum")
 
-	doctypes = "[Sales Invoice, Purchase Invoice, Ticket Invoice, Tour Invoice]" 
-	month_to_value_dict = get_monthly_results(['Sales Invoice', 'Purchase Invoice', 'Ticket Invoice', 'Tour Invoice'], "base_grand_total",
-							"posting_date", filter_str, "sum")
+#	doctypes = "[Sales Invoice, Purchase Invoice, Ticket Invoice, Tour Invoice]" 
+	month_to_value_dict = get_monthly_results(['Sales Invoice', 'Purchase Invoice'], "base_grand_total", "posting_date", filter_str, "sum")
 	frappe.msgprint(_("From update_company_monthly_sales the Sales month_to_value_dict is {0} and the Purchase month_to_value_dict is {1}").format(month_to_value_dict[0], month_to_value_dict[1]), alert=True, indicator='red')
 
 	frappe.db.set_value("Company", company, "sales_monthly_history", json.dumps(month_to_value_dict[0]))
