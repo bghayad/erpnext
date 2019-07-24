@@ -85,6 +85,9 @@ frappe.ui.form.on("Company", {
 			frm.add_custom_button(__('Default Tax Template'), function() {
 				frm.trigger("make_default_tax_template");
 			}, __("Make"));
+//			indicator
+//			msgprint("Welcome");
+			erpnext.utils.set_party_dashboard_indicators(frm);
 		}
 
 		erpnext.company.set_chart_of_accounts_options(frm.doc);
