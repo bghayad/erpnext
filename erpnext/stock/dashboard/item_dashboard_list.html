@@ -1,7 +1,7 @@
 {% for d in data %}
 	<div class="dashboard-list-item">
 		<div class="row">
-			<div class="col-sm-3 small" style="margin-top: 8px;">
+			<div class="col-sm-2 small" style="margin-top: 8px;">
 				<a data-type="warehouse" data-name="{{ d.warehouse }}">{{ d.warehouse }}</a>
 			</div>
 			<div class="col-sm-3 small" style="margin-top: 8px;">
@@ -11,6 +11,9 @@
 						{% if d.item_name != d.item_code %}({{ d.item_name }}){% endif %}
 					</a>
 				{% endif %}
+			</div>
+			<div class="col-sm-1 small" style="margin-top: 8px;">
+			    <a data-type="price_list_rate" data-name="{{ d.price_list_rate }}">{{ format_currency(d.price_list_rate, "USD", 2) }}</a>
 			</div>
 			<div class="col-sm-4 small">
 				<span class="inline-graph">

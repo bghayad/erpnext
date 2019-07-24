@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 import frappe
+from frappe import _
 from frappe.model.db_query import DatabaseQuery
 
 @frappe.whitelist()
-def get_data(item_code=None, warehouse=None, item_group=None,
+def get_data(item_code=None, warehouse=None, price_list=None, item_group=None,
 	start=0, sort_by='actual_qty', sort_order='desc'):
 	'''Return data to render the item dashboard'''
 	filters = []
@@ -42,9 +43,14 @@ def get_data(item_code=None, warehouse=None, item_group=None,
 		limit_start=start,
 		limit_page_length='21')
 
-	for item in items:
-		item.update({
-			'item_name': frappe.get_cached_value("Item", item.item_code, 'item_name')
-		})
+#	frappe.msgprint(_("items is {0}").format(items), alert=True, indicator='red')
 
+	for item in items:
+		price_list_rate = frappe.db.get_value("Item Price", {'item_code': item.item_code, 'price_list': price_list}, 'price_list_rate')
+		item.update({
+			'item_name': frappe.get_cached_value("Item", item.item_code, 'item_name'),
+			'price_list_rate': price_list_rate
+		})
+#		frappe.msgprint(_("items is {0} and price_list is {1} and price_list_rate is {2} and item_code is {3}").format(items, price_list, price_list_rate, item.item_code), alert=True, indicator='red')
+	
 	return items

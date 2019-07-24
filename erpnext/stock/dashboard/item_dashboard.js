@@ -50,6 +50,7 @@ erpnext.stock.ItemDashboard = Class.extend({
 				start: this.start,
 				sort_by: this.sort_by,
 				sort_order: this.sort_order,
+				price_list: this.price_list
 			},
 			callback: function(r) {
 				me.render(r.message);
