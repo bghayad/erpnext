@@ -81,8 +81,9 @@ def get_last_purchase_rate():
 	item_last_purchase_rate_map = {}
 
 	query = """select * from (select
-					result.item_code,
-					result.base_rate
+					distinct result.item_code,
+					result.base_rate,
+					result.posting_date
 					from (
 						(select
 							po_item.item_code,
@@ -103,7 +104,17 @@ def get_last_purchase_rate():
 							pr_item.base_rate
 						from `tabPurchase Receipt` pr, `tabPurchase Receipt Item` pr_item
 						where pr.name = pr_item.parent and pr.docstatus = 1)
-				) result
+						union
+						(select
+							pi_item.item_code,
+							pi_item.item_name,
+							pi.posting_date,
+							pi_item.base_price_list_rate,
+							pi_item.discount_percentage,
+							pi_item.base_rate
+						from `tabPurchase Invoice` pi, `tabPurchase Invoice Item` pi_item
+						where pi.name = pi_item.parent and pi.docstatus = 1)
+					) result
 				order by result.item_code asc, result.posting_date desc) result_wrapper
 				group by item_code"""
 

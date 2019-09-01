@@ -45,6 +45,10 @@ def get_data(item_code=None, warehouse=None, price_list=None, item_group=None,
 
 #	frappe.msgprint(_("items is {0}").format(items), alert=True, indicator='red')
 
+	
+	if price_list is None or price_list == "":
+		price_list = frappe.db.get_single_value('Selling Settings', 'selling_price_list')
+
 	for item in items:
 		price_list_rate = frappe.db.get_value("Item Price", {'item_code': item.item_code, 'price_list': price_list}, 'price_list_rate')
 		item.update({

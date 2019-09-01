@@ -290,9 +290,9 @@ def get_basic_details(args, item):
 	out.stock_qty = out.qty * out.conversion_factor
 
 	# calculate last purchase rate
-	if args.get('doctype') in purchase_doctypes:
-		from erpnext.buying.doctype.purchase_order.purchase_order import item_last_purchase_rate
-		out.last_purchase_rate = item_last_purchase_rate(args.name, args.conversion_rate, item.name, out.conversion_factor)
+#	if args.get('doctype') in purchase_doctypes:
+	from erpnext.buying.doctype.purchase_order.purchase_order import item_last_purchase_rate
+	out.last_purchase_rate = item_last_purchase_rate(args.name, args.conversion_rate, item.name, out.conversion_factor)
 
 	# if default specified in item is for another company, fetch from company
 	for d in [
