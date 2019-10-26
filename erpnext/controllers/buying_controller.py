@@ -337,7 +337,7 @@ class BuyingController(StockController):
 			if self.doctype in ["Purchase Receipt", "Purchase Invoice"]:
 				rm.consumed_qty = required_qty
 				rm.description = bom_item.description
-				if item.batch_no and not rm.batch_no:
+				if item.batch_no and frappe.db.get_value("Item", rm.rm_item_code, "has_batch_no") and not rm.batch_no:
 					rm.batch_no = item.batch_no
 
 			# get raw materials rate
@@ -515,10 +515,15 @@ class BuyingController(StockController):
 			for d in self.get('supplied_items'):
 				# negative quantity is passed, as raw material qty has to be decreased
 				# when PR is submitted and it has to be increased when PR is cancelled
+				incoming_rate = 0
+				if self.is_return and self.return_against and self.docstatus==1:
+					incoming_rate = self.get_incoming_rate_for_sales_return(d.rm_item_code, self.return_against)
+
 				sl_entries.append(self.get_sl_entries(d, {
 					"item_code": d.rm_item_code,
 					"warehouse": self.supplier_warehouse,
 					"actual_qty": -1*flt(d.consumed_qty),
+					"incoming_rate": incoming_rate
 				}))
 
 	def on_submit(self):

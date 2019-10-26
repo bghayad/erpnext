@@ -207,7 +207,7 @@ class SalesInvoice(SellingController):
 			for payment in self.payments:
 				total_amount_in_payments += payment.amount
 			invoice_total = self.rounded_total or self.grand_total
-			if total_amount_in_payments < invoice_total:
+			if flt(total_amount_in_payments, self.precision("grand_total")) < invoice_total:
 				frappe.throw(_("Total payments amount can't be greater than {}".format(-invoice_total)))
 
 	def validate_pos_paid_amount(self):
@@ -699,7 +699,7 @@ class SalesInvoice(SellingController):
 				cint(self.redeem_loyalty_points)) else "Yes"
 
 			make_gl_entries(gl_entries, cancel=(self.docstatus == 2),
-				update_outstanding=update_outstanding, merge_entries=False)
+				update_outstanding=update_outstanding, merge_entries=False, from_repost=from_repost)
 
 			if update_outstanding == "No":
 				from erpnext.accounts.doctype.gl_entry.gl_entry import update_outstanding_amt
