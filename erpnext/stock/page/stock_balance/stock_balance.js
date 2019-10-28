@@ -24,7 +24,7 @@ frappe.pages['stock-balance'].on_page_load = function(wrapper) {
 		options:'Item',
 		get_query: function() {
 			return {
-				query: "erpnext.controllers.queries.item_query"
+				query: "erpnext.controllers.queries.item_query_report"
 			}
 		},
 		change: function() {

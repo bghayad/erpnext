@@ -10,7 +10,11 @@ def get_data(item_code=None, warehouse=None, price_list=None, item_group=None,
 	'''Return data to render the item dashboard'''
 	filters = []
 	if item_code:
-		filters.append(['item_code', '=', item_code])
+		if frappe.db.get_value("Item", item_code, "has_variants"):
+			item_code = item_code + '%'
+		else:
+			item_code = item_code
+		filters.append(['item_code', 'like', item_code])
 	if warehouse:
 		filters.append(['warehouse', '=', warehouse])
 	if item_group:
@@ -46,8 +50,10 @@ def get_data(item_code=None, warehouse=None, price_list=None, item_group=None,
 #	frappe.msgprint(_("items is {0}").format(items), alert=True, indicator='red')
 
 	
-	if price_list is None or price_list == "":
+	if (price_list is None or price_list == "") and frappe.session.user != 'bm.ada@ghalayinibros.net':
 		price_list = frappe.db.get_single_value('Selling Settings', 'selling_price_list')
+	else:
+		price_list = "Ch Standard Selling"
 
 	for item in items:
 		price_list_rate = frappe.db.get_value("Item Price", {'item_code': item.item_code, 'price_list': price_list}, 'price_list_rate')
