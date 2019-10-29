@@ -287,6 +287,7 @@ def copy_attributes_to_variant(item, variant):
 					variant.set(field.fieldname, item.get(field.fieldname))
 
 	variant.variant_of = item.name
+	variant.item_price_code = item.item_price_code
 
 	if 'description' not in allow_fields:
 		if not variant.description:
