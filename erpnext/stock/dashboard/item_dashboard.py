@@ -43,7 +43,7 @@ def get_data(item_code=None, warehouse=None, price_list=None, item_group=None,
 			'actual_qty': ['!=', 0],
 		},
 		filters=filters,
-		order_by=sort_by + ' ' + sort_order,
+		order_by='item_code' + ', ' + 'warehouse' + ', ' + sort_by + ' ' + sort_order,
 		limit_start=start,
 		limit_page_length='21')
 

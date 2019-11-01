@@ -221,7 +221,6 @@ def item_query_report(doctype, txt, searchfield, start, page_len, filters, as_di
                 order by
                         if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
                         if(locate(%(_txt)s, item_name), locate(%(_txt)s, item_name), 99999),
-                        idx desc,
                         name, item_name
                 limit %(start)s, %(page_len)s """.format(
                         key=searchfield,
