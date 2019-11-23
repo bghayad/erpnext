@@ -769,8 +769,6 @@ def get_monthly_results(goal_doctype, goal_field, date_col, filter_str, aggregat
 				month_to_value_sales_dict[d['month_year']] = month_to_value_sales_dict[d['month_year']] \
 					+ month_to_value_sales_tour_dict[d['month_year']]
 				
-	month_to_value_sales_dict['05-2019'] = 10000
-
 	month_to_value_sales_dict_reversed = {}
 	for d in month_to_value_sales_dict:
 		d_reversed = d.split('-')[1] + "-" + d.split('-')[0]

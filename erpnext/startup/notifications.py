@@ -24,6 +24,14 @@ def get_notification_config():
 				"outstanding_amount": (">", 0),
 				"docstatus": ("<", 2)
 			},
+			"Ticket Invoice": {
+				"outstanding_amount": (">", 0),
+				"docstatus": ("<", 2)
+			},
+			"Tour Invoice": {
+				"outstanding_amount": (">", 0),
+				"docstatus": ("<", 2)
+			},
 			"Purchase Invoice": {
 				"outstanding_amount": (">", 0),
 				"docstatus": ("<", 2)

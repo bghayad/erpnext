@@ -270,7 +270,7 @@ def get_timeline_data(doctype, name):
 
 	'''quotation'''
 	items = dict(frappe.db.sql('''select transaction_date, count(*)
-		from `tabQuotation` where customer=%s
+		from `tabQuotation` where party_name=%s
 		and transaction_date > date_sub(curdate(), interval 1 year)
 		group by transaction_date''', name))
 
