@@ -763,11 +763,11 @@ def get_monthly_results(goal_doctype, goal_field, date_col, filter_str, aggregat
 				i = 1
 				break
 		if i == 0:
-			if month_to_value_sales_dict[d['month_year']] == None:
-				month_to_value_sales_dict[d['month_year']] = month_to_value_sales_tour_dict[d['month_year']]
-			else:
+			if d['month_year'] in  month_to_value_sales_dict:
 				month_to_value_sales_dict[d['month_year']] = month_to_value_sales_dict[d['month_year']] \
 					+ month_to_value_sales_tour_dict[d['month_year']]
+			else:
+				month_to_value_sales_dict[d['month_year']] = month_to_value_sales_tour_dict[d['month_year']]
 				
 	month_to_value_sales_dict_reversed = {}
 	for d in month_to_value_sales_dict:
@@ -814,11 +814,11 @@ def get_monthly_results(goal_doctype, goal_field, date_col, filter_str, aggregat
 				i = 1
 				break
 		if i == 0:
-			if  month_to_value_purchase_dict[d['month_year']] == None:
-				month_to_value_purchase_dict[d['month_year']] = month_to_value_purchase_tour_dict[d['month_year']]
-			else:
+			if  d['month_year'] in month_to_value_purchase_dict:
 				month_to_value_purchase_dict[d['month_year']] = month_to_value_purchase_dict[d['month_year']] \
 					+month_to_value_purchase_tour_dict[d['month_year']]
+			else:
+				month_to_value_purchase_dict[d['month_year']] = month_to_value_purchase_tour_dict[d['month_year']]
 
 	month_to_value_purchase_dict_reversed = {}
 	for d in month_to_value_purchase_dict:
